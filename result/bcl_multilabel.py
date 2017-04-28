@@ -1,11 +1,9 @@
-import gensim
-from sklearn.cluster import KMeans
-import scipy.io as sio
-import random
-import sklearn.svm as svm
-from sklearn.externals import joblib
 import copy
 import csv
+import random
+
+import gensim
+import sklearn.svm as svm
 
 train_data = list()
 test_data = list()
@@ -17,6 +15,8 @@ clf_model=dict()
 group_list=list()
 nodes_groups=dict()
 groups_nodes=dict()
+
+model_path='/tmp/bcl_cbow_128_10_80_10_05_025.model'
 
 def main():
     load_data()
@@ -35,13 +35,13 @@ def prepare_data_for_train():
             train_data.append(node)
         else:
             test_data.append(node)
-
+    print len(train_data),len(test_data)
 
 def load_data():
-    model_path='/tmp/bcl_cbow_128_10_80_10_4_1.model'
-    print model_path
+
+
     global model
-    model = gensim.models.Word2Vec.load('/tmp/bcl_cbow_128_10_80_10_4_1.model')
+    model = gensim.models.Word2Vec.load(model_path)
     print type(model.index2word)
     # print model['2']
 
@@ -79,14 +79,17 @@ def prepare_classification(target):
     positive_list=list()
     negative_list=list()
     global nodes_groups
+    # random.shuffle(train_data)
     for node, llist in nodes_groups.iteritems():
         if (node in train_data):
             if (target in llist):
                 positive_list.append(node)
             else:
                 negative_list.append(node)
-
-
+    positive_list.extend(positive_list)
+    positive_list.extend(positive_list)
+    # negative_list=negative_list[:min(len(negative_list),len(positive_list)*16)]
+    # print len(positive_list),len(negative_list)
     positive_list.extend(negative_list)
     random.shuffle(positive_list)
     nX=positive_list[:]
@@ -100,6 +103,7 @@ def prepare_classification(target):
     clf_model[target]=copy.deepcopy(lin_svc)
 
 def test():
+    print model_path
     tp=dict.fromkeys(group_list,0)
     pre_total=dict.fromkeys(group_list,0)
     tru_total=dict.fromkeys(group_list,0)
@@ -150,6 +154,8 @@ def test():
     print total_label
     print "micro-f1:",sum(f1.values())/total_label
     print "macro-f1:",2*(sum(tp.values())+0.0)/(sum(pre_total.values())+sum(tru_total.values()))
+    print model_path
+    print "svm"
 
 if __name__ == "__main__":
 	main()

@@ -1,10 +1,9 @@
-import gensim
-from sklearn.cluster import KMeans
-import scipy.io as sio
-import random
-import sklearn.svm as svm
-from sklearn.externals import joblib
 import copy
+import random
+
+import gensim
+import scipy.io as sio
+import sklearn.svm as svm
 
 nodes_labels = dict()
 labels_nodes = dict()
@@ -55,8 +54,8 @@ def load_data():
         for j in range(indptr[i], indptr[i + 1]):
             # print indices[j], i
             node_label_pair.append((indices[j], i))
-            label_list.append(i)
-
+            if not (i in label_list):
+                label_list.append(i)
             node = indices[j]
             if nodes_labels.has_key(node):
                 nodes_labels[node].append(i)  # node has label i
@@ -85,6 +84,10 @@ def prepare_classification(target):
             else:
                 negative_list.append(node)
 
+    positive_list.extend(positive_list)
+    positive_list.extend(positive_list)
+
+    # print len(positive_list),len(negative_list)
     # for node, label in node_label_pair:
     #     if (node in train_data):
     #         if (target==label):

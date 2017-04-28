@@ -1,14 +1,10 @@
 #coding: UTF-8
-import os
+import csv
+import logging
+
 import networkx as nx
 import numpy as np
 from gensim.models import Word2Vec
-import logging
-# import genesis.models
-# import Word2Vec
-import scipy.io as sio
-import pandas as pd
-import csv
 
 G=nx.Graph()
 GG=nx.Graph()
@@ -124,7 +120,7 @@ def learnFeature(d,r,l,k,p,q):
 def learnEmmbeding(k,d,walks):
     walks = [map(str, walk) for walk in walks]
     model = Word2Vec(walks, size=d, window=k, min_count=0, sg=1)
-    model.save('/tmp/bcl_cbow_128_10_80_10_2_1.model')
+    model.save('/tmp/bcl_cbow_128_10_80_10_05_025.model')
     return
 
 def loadData():
@@ -135,8 +131,8 @@ def loadData():
 
 def main():
     logging.basicConfig(format='%(asctime)s:%(levelname)s: %(message)s', level=logging.INFO)
-    p=2
-    q=1
+    p=0.5
+    q=0.25
     loadData()
     learnFeature(128,10,80,10,p,q)
 

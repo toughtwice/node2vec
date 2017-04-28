@@ -1,12 +1,13 @@
 #coding: UTF-8
+import logging
 import os
+import pickle
+
 import networkx as nx
 import numpy as np
 import scipy
 from gensim.models import Word2Vec
-import logging
-# import genesis.models
-# import Word2Vec
+from scipy import io
 
 G=nx.Graph()
 GG=nx.Graph()
@@ -27,10 +28,25 @@ def readFBData(filepath):
                 G.add_node(x)
                 G.add_node(y)
                 G.add_edge(x,y)
-                G.add_edge(ego,x)
-                G.add_edge(ego,y)
+                G.add_edge(ego,x,samp=1)
+                G.add_edge(ego,y,samp=1)
             fopen.close()
     G.to_undirected()
+
+    # io.savemat("G.mat",{"graph":G})
+    # print "save"
+    # tmp=io.loadmat("G.mat")
+    # global G
+    # G=tmp["graph"]
+    # print "load"
+
+    f1 = open("graph.txt", "wb")
+    pickle.dump(G, f1)
+    f1.close()
+    f2 = open("graph.txt", "rb")
+    load_list = pickle.load(f2)
+    f2.close()
+    # pprint.pprint(load_list.nodes())
     return
 
 def readPPIData(filepath):
@@ -125,7 +141,7 @@ def learnFeature(d,r,l,k,p,q):
 def learnEmmbeding(k,d,walks):
     walks = [map(str, walk) for walk in walks]
     model = Word2Vec(walks, size=d, window=k, min_count=0, sg=1)
-    model.save('/tmp/cbow_128_10_80_10_4_1.model')
+    model.save('/Users/mac/Documents/gra/tmp/fb_cbow_128_10_80_10_4_1.model')
     return
 
 def loadData():
@@ -139,7 +155,7 @@ def main():
     p=4
     q=1
     loadData()
-    learnFeature(128,10,80,10,p,q)
+    # learnFeature(128,10,80,10,p,q)
 
 if __name__ == "__main__":
 	main()
