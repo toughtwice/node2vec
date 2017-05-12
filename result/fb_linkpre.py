@@ -6,16 +6,17 @@ import matplotlib.pyplot as plt
 from sklearn import linear_model
 from sklearn import metrics
 
-biop=2
-train_data_num=1000
+biop=22
+biop_str={1:"average",2:"harmard",22:"harmard2",3:"weightedl1",4:"weightedl2"}
+train_data_num=10000
 def load_data():
     global G
-    f2 = open("../experiment/graph.txt", "rb")
+    f2 = open("../experiment/graph_connect.txt", "rb")
     load_list = pickle.load(f2)
     f2.close()
     G = load_list
 
-    model_path ='/Users/mac/Documents/gra/tmp/fb_cbow_128_10_80_10_4_1.model'
+    model_path ='/Users/mac/Documents/gra/tmp/fb_cbow_128_10_80_10_4_1_2.model'
     print model_path
     global model
     model = gensim.models.Word2Vec.load(model_path)
@@ -23,6 +24,13 @@ def load_data():
     global nodes_num
     nodes_num=len(G.nodes())
     print "load data done"
+
+    # nbs=G.neighbors(1233)
+    # for n in nbs:
+    #     print G[1233][n]
+    #
+    # print
+
 
 def test():
 
@@ -33,7 +41,7 @@ def test():
     actual=list()
     pred=list()
     for edge in G.edges(data=True):
-        if not edge[2]['samp']:
+        if edge[2]['samp']==0:
             prob=logreg.predict_proba([solve(edge[0],edge[1],biop)])#[1]   #
             # print prob
             if random.random()>(test_len+0.0)/(40000-train_data_num):
@@ -68,10 +76,10 @@ def test():
     print "prepare test done"
     roc_auc = metrics.roc_auc_score(actual, pred)
     print roc_auc
-
+    print biop_str[biop]
     fpr, tpr, thresholds = metrics.roc_curve(actual, pred)
     # roc_auc = metrics.auc(fpr, tpr)
-    plt.title(roc_auc)
+    plt.title(str(biop_str[biop])+" auc:"+str(roc_auc))
     plt.plot(fpr, tpr)
     plt.show()
     return
@@ -84,27 +92,26 @@ def prepare_train():
     global nodes_num
     train_positive_list = list()
     train_negative_list=list()
-    p_list=list()
-    n_list=list()
     pl = 0
     random.shuffle(G.edges(data=True))
     for edge in G.edges(data=True):
-        if edge[2]['samp']:
+        if edge[2]['samp']==1:
             if random.random() > 0.2:
                 pl += 1
                 x=edge[0]
                 y=edge[1]
-                # positive_list.append((x,y,{"vec":hadamard(x,y),"exist":1}))
                 train_positive_list.append((x,y))
-                # p_list.append(hadamard(x,y))
                 if pl>=train_data_num:
                     break
 
     cnt=0
+    node_list=G.nodes()
     while True:
-        node1=G.nodes()[random.randrange(nodes_num)]
-        node2=G.nodes()[random.randrange(nodes_num)]
-        if not node2 in G.neighbors(node1):
+        node1=node_list[random.randrange(nodes_num)]
+        node2=node_list[random.randrange(nodes_num)]
+        if node1==node2:
+            continue
+        if not (node2 in G.neighbors(node1)):
             train_negative_list.append((node1, node2))
             cnt+=1
         if cnt>=train_data_num:
@@ -112,22 +119,10 @@ def prepare_train():
 
     print 'train positive',pl,' , negative ',cnt
 
-    # for node1 in G.nodes():
-    #     for node2 in G.nodes():
-    #         if not node2 in G.neighbors(node1):
-    #             if random.random() > 0.8:
-    #                 # negative_list.append((node1, node2, {"vec": hadamard(x, y), "exist": 0}))
-    #                 train_negative_list.append((node1, node2))
-    #                 # n_list.append(hadamard(x, y))
-    #             if len(train_negative_list) > train_data_num:
-    #                 break
-    #     if len(train_negative_list)>train_data_num:
-    #         break
-    # p_list.extend(n_list)
-    # random.shuffle(p_list)
     nX = train_positive_list[:]
     nX.extend(train_negative_list)
-    vX = [hadamard(edge[0],edge[1]) for edge in nX]
+    random.shuffle(nX)
+    vX = [solve(edge[0],edge[1],biop) for edge in nX]
     Y = [0 if edge in train_negative_list else 1 for edge in nX]
     # print Y
     global logreg
@@ -160,6 +155,15 @@ def average(x,y):
 
 def hadamard(x,y):
     global model
+    # for n in G.neighbors(x):
+    #     if G[x][n]['samp']==1:
+    #         print 'okx'
+    #         break
+    # for n in G.neighbors(y):
+    #     if G[y][n]['samp'] == 1:
+    #         print 'oky'
+    #         break
+    # print G.neighbors(y)
     vec1=model[str(x)]
     vec2=model[str(y)]
     prod = [a * b for a, b in zip(vec1, vec2)]
@@ -185,7 +189,7 @@ def weightedl2(x,y):
     global model
     vec1 = model[str(x)]
     vec2 = model[str(y)]
-    prod = [abs(a - b)*abs(a - b) for a, b in zip(vec1, vec2)]
+    prod = [(a - b)*(a - b) for a, b in zip(vec1, vec2)]
     return prod
 
 def main():
