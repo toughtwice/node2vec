@@ -200,7 +200,7 @@ def learnFeature(d,r,l,k,p,q):
 def learnEmmbeding(k,d,walks):
     walks = [map(str, walk) for walk in walks]
     model = Word2Vec(walks, size=d, window=k, min_count=0, sg=1)
-    model.save('/Users/mac/Documents/gra/tmp/fb_cbow_128_10_80_10_4_1_2.model')
+    model.save('/Users/mac/Documents/gra/tmp/fb_cbow_10_10_80_10_4_1_2.model')
     return
 
 def loadData():
@@ -214,7 +214,7 @@ def main():
     p=4
     q=1
     loadData()
-    learnFeature(128,10,80,10,p,q)
+    learnFeature(10,10,80,10,p,q)
 
 
 if __name__ == "__main__":

@@ -3,15 +3,19 @@ import random
 
 import gensim
 import matplotlib.pyplot as plt
+import sklearn.svm as svm
 from sklearn import linear_model
 from sklearn import metrics
 
 biop=22
 biop_str={1:"average",2:"harmard",22:"harmard2",3:"weightedl1",4:"weightedl2"}
-train_data_num=10000
+train_data_num=15000
+logreg=""
+lin_svc=""
+tt=False
 def load_data():
     global G
-    f2 = open("../experiment/graph_connect.txt", "rb")
+    f2 = open("../node_embedding/graph_connect.txt", "rb")
     load_list = pickle.load(f2)
     f2.close()
     G = load_list
@@ -33,21 +37,36 @@ def load_data():
 
 
 def test():
-
     global logreg
     global train_negative_list
     global biop
     test_len=10000
     actual=list()
     pred=list()
+    ve=list()
+
+
+    print logreg.get_params()
+
     for edge in G.edges(data=True):
         if edge[2]['samp']==0:
-            prob=logreg.predict_proba([solve(edge[0],edge[1],biop)])#[1]   #
-            # print prob
             if random.random()>(test_len+0.0)/(40000-train_data_num):
                 continue
+            vec=[solve(edge[0],edge[1],biop)]
+
+            prob=logreg.predict_proba(vec)#[1]   #
+            # prob=logreg.decision_function(vec)
+
+            # print vec
+            if tt == True:
+                print prob
             actual.append(1)
             pred.append(prob[0][1])
+            ve.extend(logreg.predict(vec))
+    if tt == True:
+        print actual
+        print ve
+        print pred
     print "test positive ",len(actual)
     cnt=0
     while True:
@@ -56,13 +75,26 @@ def test():
         if not node2 in G.neighbors(node1):
             if (node1,node2) in train_negative_list:  #in train data
                 continue
-            prob = logreg.predict_proba([solve(node1, node2, biop)])
+            vec=[solve(node1, node2, biop)]
+            prob = logreg.predict_proba(vec)
+            # prob = logreg.decision_function(vec)
+            if tt == True:
+                print prob
             cnt += 1
             actual.append(0)
             pred.append(prob[0][1])
+            ve.extend(logreg.predict(vec))
         if cnt >= test_len:
             break
     print "test negative ",cnt
+
+    print actual
+    print ve
+    print pred
+
+    # prod = [a^b for a, b in zip(actual, ve)]
+    # print prod
+    # print sum(prod)
 
     # for node1 in G.nodes():
     #     for node2 in G.nodes():
@@ -121,13 +153,23 @@ def prepare_train():
 
     nX = train_positive_list[:]
     nX.extend(train_negative_list)
-    random.shuffle(nX)
+    # random.shuffle(nX)
     vX = [solve(edge[0],edge[1],biop) for edge in nX]
     Y = [0 if edge in train_negative_list else 1 for edge in nX]
     # print Y
     global logreg
-    logreg = linear_model.LogisticRegression(penalty='l2')
+    logreg = linear_model.LogisticRegression()
     logreg.fit(vX, Y)
+    # logreg.
+    if tt == True:
+        for v in vX:
+            print v
+
+
+    global lin_svc
+    lin_svc = svm.LinearSVC()
+    lin_svc.fit(vX, Y)
+
     print "train lr done"
 
 def solve(x,y,para):

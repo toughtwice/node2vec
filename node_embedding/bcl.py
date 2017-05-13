@@ -1,8 +1,6 @@
 #coding: UTF-8
+import csv
 import logging
-import os
-import pickle
-import random
 
 import networkx as nx
 import numpy as np
@@ -10,53 +8,26 @@ from gensim.models import Word2Vec
 
 G=nx.Graph()
 GG=nx.Graph()
-pct=0.5
 
-def readFBData(filepath):
-    global G
-    pathDir = os.listdir(filepath)
-    for efile in pathDir:
-        if efile.endswith('.edges'):
-            ego=int(efile.split('.')[0])
-            G.add_node(ego)
-            # print ego
-            child = os.path.join('%s%s' % (filepath, efile)) #文件路径
-            print(child)
-            # child='/Users/mac/Documents/gra/facebook/3980.edges'
-            fopen = open(child, 'r')
-            for line in fopen:
-                x=int(line.split(' ')[0])
-                y=int(line.split(' ')[1])
-                G.add_node(x)
-                G.add_node(y)
-                # if random.random() < pct:
-                #     G.add_edge(x, y)
-                # if random.random() < pct:
-                #     G.add_edge(ego, x)
-                # if random.random() < pct:
-                #     G.add_edge(ego, y)
-                G.add_edge(x,y,samp=(random.random()<pct))
-                G.add_edge(ego,x,samp=(random.random()<pct))
-                G.add_edge(ego,y,samp=(random.random()<pct))
-            fopen.close()
+def readPPIData(filepath):
+    nodes_file = file(filepath+"nodes.csv", 'rb')
+    reader = csv.reader(nodes_file)
+    for line in reader:
+        G.add_node(int(line[0]))
+
+    edges_file = file(filepath + "edges.csv", 'rb')
+    reader = csv.reader(edges_file)
+    for line in reader:
+        G.add_edge(int(line[0]),int(line[1]))
+
+
+    # group_file=file(filepath + "groups.csv", 'rb')
+    # reader = csv.reader(group_file)
+    # for line in reader:
+    #     G.add_edge(int(line[0]))
+
     G.to_undirected()
-    random.shuffle(G.nodes())
-    random.shuffle(G.edges())
-    # io.savemat("G.mat",{"graph":G})
-    # print "save"
-    # tmp=io.loadmat("G.mat")
-    # global G
-    # G=tmp["graph"]
-    # print "load"
-
-    f1 = open("graph.txt", "wb")
-    pickle.dump(G, f1)
-    f1.close()
-    f2 = open("graph.txt", "rb")
-    load_list = pickle.load(f2)
-    f2.close()
-    print load_list
-    G = load_list
+    print 'data done'
     return
 
 def alias_solve(prob):
@@ -134,35 +105,36 @@ def sample(t,v):
 #k 每个节点最终选多大的context长度，Return p, In-out q
 def learnFeature(d,r,l,k,p,q):
     preprocessModifiedWeights(p,q)
+    print "preprocess done"
     global walks
     walks=list()
     for i in range(r):
         for node in G.nodes():
             walk=node2vecWalk(node,l)
             walks.append(walk)
+    print "walks done"
     learnEmmbeding(k,d,walks)
+    print "emb done"
     return
 
 def learnEmmbeding(k,d,walks):
     walks = [map(str, walk) for walk in walks]
     model = Word2Vec(walks, size=d, window=k, min_count=0, sg=1)
-    model.save('/Users/mac/Documents/gra/tmp/fb_cbow_128_10_80_10_4_1.model')
+    model.save('/tmp/bcl_cbow_128_10_80_10_1_025.model')
     return
 
 def loadData():
-    fbpathDir = '/Users/mac/Documents/gra/facebook/'
-    readFBData(fbpathDir)
+    ppipathDir = '/Users/mac/Documents/gra/BlogCatalog-dataset/data/'
+    readPPIData(ppipathDir)
 
     return
 
-
 def main():
     logging.basicConfig(format='%(asctime)s:%(levelname)s: %(message)s', level=logging.INFO)
-    p=4
-    q=1
+    p=1
+    q=0.25
     loadData()
     learnFeature(128,10,80,10,p,q)
-
 
 if __name__ == "__main__":
 	main()

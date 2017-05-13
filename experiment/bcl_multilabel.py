@@ -16,7 +16,7 @@ group_list=list()
 nodes_groups=dict()
 groups_nodes=dict()
 
-model_path='/tmp/bcl_cbow_128_10_80_10_05_025.model'
+model_path='/tmp/bcl_cbow_128_10_80_10_1_025.model'
 
 def main():
     load_data()
@@ -87,7 +87,10 @@ def prepare_classification(target):
             else:
                 negative_list.append(node)
     positive_list.extend(positive_list)
+    tmp=positive_list[:]
     positive_list.extend(positive_list)
+    positive_list.extend(tmp)
+
     # negative_list=negative_list[:min(len(negative_list),len(positive_list)*16)]
     # print len(positive_list),len(negative_list)
     positive_list.extend(negative_list)
@@ -152,8 +155,8 @@ def test():
             tmp.append(k)
     print tmp
     print total_label
-    print "micro-f1:",sum(f1.values())/total_label
-    print "macro-f1:",2*(sum(tp.values())+0.0)/(sum(pre_total.values())+sum(tru_total.values()))
+    print "macro-f1:",sum(f1.values())/total_label
+    print "micro-f1:",2*(sum(tp.values())+0.0)/(sum(pre_total.values())+sum(tru_total.values()))
     print model_path
     print "svm"
 

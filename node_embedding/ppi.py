@@ -1,12 +1,10 @@
 #coding: UTF-8
-import os
+import logging
+
 import networkx as nx
 import numpy as np
-from gensim.models import Word2Vec
-import logging
-# import genesis.models
-# import Word2Vec
 import scipy.io as sio
+from gensim.models import Word2Vec
 
 G=nx.Graph()
 GG=nx.Graph()
