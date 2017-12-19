@@ -1,0 +1,4 @@
+# node2vec
+实验node2vec效果
+node_embedding是embed部分
+experiment是在数据集上进行实验部分 multi-label和link-prediction各用了一个数据集
